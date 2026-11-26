@@ -427,25 +427,16 @@ class _CotsworthInputPanelState extends State<_CotsworthInputPanel> {
                     segments: [
                       const ButtonSegment(
                         value: CotsworthDayType.regular,
-                        label: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text('Regular', maxLines: 1),
-                        ),
+                        label: Text('Regular'),
                       ),
                       ButtonSegment(
                         value: CotsworthDayType.leapDay,
-                        label: const FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text('Leap Day', maxLines: 1),
-                        ),
+                        label: const Text('Leap Day'),
                         enabled: isLeap,
                       ),
                       const ButtonSegment(
                         value: CotsworthDayType.yearDay,
-                        label: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text('Year Day', maxLines: 1),
-                        ),
+                        label: Text('Year Day'),
                       ),
                     ],
                     selected: {state.cotsworthDayType},
@@ -460,7 +451,6 @@ class _CotsworthInputPanelState extends State<_CotsworthInputPanel> {
                   key: ValueKey(
                     'month_${state.cotsworthMonth ?? CotsworthMonth.january}',
                   ),
-                  isExpanded: true,
                   initialValue: state.cotsworthMonth ?? CotsworthMonth.january,
                   decoration: const InputDecoration(labelText: 'Month'),
                   items: CotsworthMonth.values
@@ -469,7 +459,6 @@ class _CotsworthInputPanelState extends State<_CotsworthInputPanel> {
                           value: m,
                           child: Text(
                             '${m.number}. ${m.fullName}',
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: m.isSol
                                   ? AppTheme.solAccent(context)
@@ -487,7 +476,6 @@ class _CotsworthInputPanelState extends State<_CotsworthInputPanel> {
                 const SizedBox(height: 12),
                 DropdownButtonFormField<int>(
                   key: ValueKey('day_${state.cotsworthDay.clamp(1, 28)}'),
-                  isExpanded: true,
                   initialValue: state.cotsworthDay.clamp(1, 28),
                   decoration: const InputDecoration(labelText: 'Day (1–28)'),
                   items: List.generate(28, (i) {
@@ -503,10 +491,7 @@ class _CotsworthInputPanelState extends State<_CotsworthInputPanel> {
                     ][(d - 1) % 7];
                     return DropdownMenuItem(
                       value: d,
-                      child: Text(
-                        'Day $d — $weekday',
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      child: Text('Day $d — $weekday'),
                     );
                   }),
                   onChanged: (d) {
