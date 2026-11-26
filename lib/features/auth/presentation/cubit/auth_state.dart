@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+
 import '../../domain/auth_user.dart';
 
 sealed class AuthState extends Equatable {

@@ -59,18 +59,23 @@ final class RegularCotsworthDate extends CotsworthDate {
   NaturalCyclePhase get cyclePhase => NaturalCyclePhase.fromDay(day);
 
   String get weekdayName => const [
-        'Sunday', 'Monday', 'Tuesday', 'Wednesday',
-        'Thursday', 'Friday', 'Saturday',
-      ][weekdayIndex];
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+  ][weekdayIndex];
 
-  String get weekdayShortName => const [
-        'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat',
-      ][weekdayIndex];
+  String get weekdayShortName =>
+      const ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][weekdayIndex];
 
   @override
   int get dayOfYear {
-    final leapOffset =
-        CotsworthConverter.isLeapYear(year) && month.number >= 7 ? 1 : 0;
+    final leapOffset = CotsworthConverter.isLeapYear(year) && month.number >= 7
+        ? 1
+        : 0;
     return (month.number - 1) * 28 + day + leapOffset;
   }
 

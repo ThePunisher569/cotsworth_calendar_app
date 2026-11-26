@@ -18,12 +18,9 @@ class GuestAccountBadge extends StatelessWidget {
     final theme = Theme.of(context);
     final avatar = CircleAvatar(
       radius: compact ? 14 : 18,
-      backgroundColor: theme.colorScheme.primaryContainer,
-      foregroundColor: theme.colorScheme.onPrimaryContainer,
-      child: Icon(
-        Icons.person_outline_rounded,
-        size: compact ? 16 : 20,
-      ),
+      backgroundColor: theme.colorScheme.primary.withAlpha(32),
+      foregroundColor: theme.colorScheme.primary,
+      child: Icon(Icons.person_outline_rounded, size: compact ? 16 : 20),
     );
 
     if (compact) {
@@ -40,11 +37,9 @@ class GuestAccountBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
+        color: theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withAlpha(150),
-        ),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Row(
         children: [
@@ -64,6 +59,8 @@ class GuestAccountBadge extends StatelessWidget {
                 Text(
                   'Temp Guest Account',
                   style: theme.textTheme.labelSmall?.copyWith(
+                    fontSize: 10.5,
+                    letterSpacing: 0.2,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                   overflow: TextOverflow.ellipsis,

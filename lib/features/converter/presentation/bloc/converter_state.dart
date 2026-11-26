@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+
 import '../../../../core/calendar_engine/cotsworth_date.dart';
 import '../../../../core/calendar_engine/cotsworth_month.dart';
 
@@ -57,14 +58,14 @@ class ConverterState extends Equatable {
 
   @override
   List<Object?> get props => [
-        direction,
-        gregorianInput,
-        cotsworthYear,
-        cotsworthMonth,
-        cotsworthDay,
-        cotsworthDayType,
-        result,
-        error,
-        history,
-      ];
+    direction,
+    gregorianInput,
+    cotsworthYear,
+    cotsworthMonth,
+    cotsworthDay,
+    cotsworthDayType,
+    result,
+    error,
+    history,
+  ];
 }

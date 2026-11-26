@@ -33,8 +33,9 @@ class AppLocalStorageService implements LocalStorageService {
     return AppLocalStorageService._(prefs, calendarBox, converterBox);
   }
 
+  /// Defaults to dark mode on fresh launch to match the dark calendar theme.
   @override
-  bool get isDarkMode => _prefs.getBool(_kDarkMode) ?? false;
+  bool get isDarkMode => _prefs.getBool(_kDarkMode) ?? true;
   @override
   Future<void> setDarkMode(bool value) => _prefs.setBool(_kDarkMode, value);
 

@@ -17,16 +17,16 @@ extension CotsworthDateExt on CotsworthDate {
   bool get isIntercalary => this is LeapDay || this is YearDay;
 
   String get weekdayLabel => switch (this) {
-        RegularCotsworthDate(:final weekdayName) => weekdayName,
-        LeapDay() || YearDay() => 'No Weekday (Intercalary)',
-      };
+    RegularCotsworthDate(:final weekdayName) => weekdayName,
+    LeapDay() || YearDay() => 'No Weekday (Intercalary)',
+  };
 
   String get cycleAlignmentLabel => switch (this) {
-        RegularCotsworthDate(:final day, :final cyclePhase) =>
-          'Cycle Day $day of 28 · ${cyclePhase.title}',
-        LeapDay() => 'Intercalary Pause · Outside 28-Day Cycle',
-        YearDay() => 'Annual Reset · Outside 28-Day Cycle',
-      };
+    RegularCotsworthDate(:final day, :final cyclePhase) =>
+      'Cycle Day $day of 28 · ${cyclePhase.title}',
+    LeapDay() => 'Intercalary Pause · Outside 28-Day Cycle',
+    YearDay() => 'Annual Reset · Outside 28-Day Cycle',
+  };
 
   CotsworthDate addDays(int days) => CotsworthConverter.addDays(this, days);
 }

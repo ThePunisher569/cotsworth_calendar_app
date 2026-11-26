@@ -82,22 +82,22 @@ abstract final class CotsworthConverter {
   static DateTime toGregorian(CotsworthDate date) {
     return switch (date) {
       YearDay(:final year) => gregorianFromDoy(
-          year,
-          isLeapYear(year) ? 366 : 365,
-        ),
+        year,
+        isLeapYear(year) ? 366 : 365,
+      ),
       LeapDay(:final year) => () {
-          if (!isLeapYear(year)) {
-            throw ArgumentError(
-              'Year $year is not a leap year and has no Leap Day.',
-            );
-          }
-          return gregorianFromDoy(year, 169);
-        }(),
+        if (!isLeapYear(year)) {
+          throw ArgumentError(
+            'Year $year is not a leap year and has no Leap Day.',
+          );
+        }
+        return gregorianFromDoy(year, 169);
+      }(),
       RegularCotsworthDate(:final year, :final month, :final day) => () {
-          final leapOffset = isLeapYear(year) && month.number >= 7 ? 1 : 0;
-          final doy = (month.number - 1) * 28 + day + leapOffset;
-          return gregorianFromDoy(year, doy);
-        }(),
+        final leapOffset = isLeapYear(year) && month.number >= 7 ? 1 : 0;
+        final doy = (month.number - 1) * 28 + day + leapOffset;
+        return gregorianFromDoy(year, doy);
+      }(),
     };
   }
 
@@ -105,15 +105,17 @@ abstract final class CotsworthConverter {
   /// boundaries accurately via UTC Gregorian math.
   static CotsworthDate addDays(CotsworthDate date, int days) {
     final g = toGregorian(date);
-    final shiftedUtc = DateTime.utc(g.year, g.month, g.day).add(
-      Duration(days: days),
-    );
+    final shiftedUtc = DateTime.utc(
+      g.year,
+      g.month,
+      g.day,
+    ).add(Duration(days: days));
     return fromGregorian(shiftedUtc);
   }
 
   /// Returns all 28 paired Cotsworth + Gregorian entries for [month] in [year].
   static List<({RegularCotsworthDate cotsworth, DateTime gregorian})>
-      getMonthDays(int year, CotsworthMonth month) {
+  getMonthDays(int year, CotsworthMonth month) {
     return List.generate(28, (index) {
       final cotsworth = RegularCotsworthDate(
         year: year,

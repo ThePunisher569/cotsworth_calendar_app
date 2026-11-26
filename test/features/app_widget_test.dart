@@ -55,6 +55,32 @@ void main() {
       final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
       expect(materialApp.themeMode, equals(ThemeMode.dark));
     });
+
+    testWidgets(
+      'starts in dark mode when persisted and toggles to light mode',
+      (tester) async {
+        tester.view.physicalSize = const Size(1440, 900);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        final storage = InMemoryLocalStorageService(
+          darkMode: true,
+          guestLoggedIn: true,
+        );
+        await tester.pumpWidget(CotsworthApp(storage: storage));
+        await tester.pumpAndSettle();
+
+        var materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
+        expect(materialApp.themeMode, equals(ThemeMode.dark));
+
+        await tester.tap(find.byKey(const Key('theme_toggle_button')));
+        await tester.pumpAndSettle();
+
+        materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
+        expect(materialApp.themeMode, equals(ThemeMode.light));
+      },
+    );
   });
 
   group('Home Calendar Screen', () {
@@ -132,5 +158,29 @@ void main() {
       await pumpApp(tester, loggedIn: true, size: const Size(768, 1024));
       expect(find.byType(NavigationRail), findsOneWidget);
     });
+
+    testWidgets(
+      'mobile bottom sheet closes when opening Converter and Year View renders 13 mini-months',
+      (tester) async {
+        await pumpApp(tester, loggedIn: true, size: const Size(375, 812));
+
+        // Tap day 15 to open mobile details bottom sheet
+        await tester.tap(find.text('15'));
+        await tester.pumpAndSettle();
+        expect(find.text('Open in Converter'), findsOneWidget);
+
+        // Navigating to Converter must dismiss the modal bottom sheet
+        await tester.tap(find.text('Open in Converter'));
+        await tester.pumpAndSettle();
+        expect(find.text('Open in Converter'), findsNothing);
+        expect(find.text('Gregorian ↔ Cotsworth Converter'), findsOneWidget);
+
+        // Open Year View and verify mini-month overview renders SOL and DEC
+        await tester.tap(find.text('Year View'));
+        await tester.pumpAndSettle();
+        expect(find.text('SOL'), findsOneWidget);
+        expect(find.text('DEC'), findsOneWidget);
+      },
+    );
   });
 }

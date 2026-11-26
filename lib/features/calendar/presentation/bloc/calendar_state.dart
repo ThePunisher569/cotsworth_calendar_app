@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+
 import '../../../../core/calendar_engine/cotsworth_converter.dart';
 import '../../../../core/calendar_engine/cotsworth_date.dart';
 import '../../../../core/calendar_engine/cotsworth_month.dart';
@@ -32,13 +33,12 @@ class CalendarState extends Equatable {
     CotsworthMonth? focusedMonth,
     CotsworthDate? selectedDate,
     CotsworthDate? today,
-  }) =>
-      CalendarState(
-        focusedYear: focusedYear ?? this.focusedYear,
-        focusedMonth: focusedMonth ?? this.focusedMonth,
-        selectedDate: selectedDate ?? this.selectedDate,
-        today: today ?? this.today,
-      );
+  }) => CalendarState(
+    focusedYear: focusedYear ?? this.focusedYear,
+    focusedMonth: focusedMonth ?? this.focusedMonth,
+    selectedDate: selectedDate ?? this.selectedDate,
+    today: today ?? this.today,
+  );
 
   @override
   List<Object?> get props => [focusedYear, focusedMonth, selectedDate, today];

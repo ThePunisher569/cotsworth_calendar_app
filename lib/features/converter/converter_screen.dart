@@ -54,11 +54,23 @@ class ConverterScreen extends StatelessWidget {
                           segments: const [
                             ButtonSegment(
                               value: ConversionDirection.gregorianToCotsworth,
-                              label: Text('Gregorian → Cotsworth'),
+                              label: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'Gregorian → Cotsworth',
+                                  maxLines: 1,
+                                ),
+                              ),
                             ),
                             ButtonSegment(
                               value: ConversionDirection.cotsworthToGregorian,
-                              label: Text('Cotsworth → Gregorian'),
+                              label: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'Cotsworth → Gregorian',
+                                  maxLines: 1,
+                                ),
+                              ),
                             ),
                           ],
                           selected: {state.direction},
@@ -71,6 +83,13 @@ class ConverterScreen extends StatelessWidget {
                       IconButton.filledTonal(
                         key: const Key('converter_swap_button'),
                         tooltip: 'Swap direction',
+                        style: IconButton.styleFrom(
+                          backgroundColor: theme.colorScheme.surfaceContainer,
+                          foregroundColor: theme.colorScheme.primary,
+                          side: BorderSide(
+                            color: theme.colorScheme.outlineVariant,
+                          ),
+                        ),
                         onPressed: () =>
                             context.read<ConverterCubit>().swapDirection(),
                         icon: const Icon(Icons.swap_horiz_rounded),
@@ -87,9 +106,10 @@ class ConverterScreen extends StatelessWidget {
                   if (state.error != null)
                     Container(
                       padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.errorContainer,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                       child: Row(
                         children: [
@@ -116,8 +136,11 @@ class ConverterScreen extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          'Recent Conversions',
-                          style: theme.textTheme.titleSmall,
+                          'RECENT CONVERSIONS',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            letterSpacing: 0.8,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                         const Spacer(),
                         TextButton(
@@ -127,25 +150,36 @@ class ConverterScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     ...state.history.map(
                       (h) => Card(
                         child: ListTile(
                           dense: true,
-                          title: Text(h.cotsworth.formatFull()),
+                          title: Text(
+                            h.cotsworth.formatFull(),
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           subtitle: Text(
                             DateFormat('EEEE, MMM d, y').format(h.gregorian),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
                           trailing: IconButton(
                             tooltip: 'View on Calendar',
-                            icon: const Icon(Icons.calendar_month_outlined),
+                            icon: Icon(
+                              Icons.calendar_month_outlined,
+                              color: theme.colorScheme.primary,
+                            ),
                             onPressed: () {
-                              context
-                                  .read<CalendarBloc>()
-                                  .add(CalendarJumpToDate(h.cotsworth));
-                              context
-                                  .read<NavigationCubit>()
-                                  .select(AppDestination.home);
+                              context.read<CalendarBloc>().add(
+                                CalendarJumpToDate(h.cotsworth),
+                              );
+                              context.read<NavigationCubit>().select(
+                                AppDestination.home,
+                              );
                             },
                           ),
                         ),
@@ -201,6 +235,9 @@ class _GregorianInputPanelState extends State<_GregorianInputPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final now = context.read<ConverterCubit>().now();
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -208,13 +245,17 @@ class _GregorianInputPanelState extends State<_GregorianInputPanel> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Gregorian Date Input',
-              style: Theme.of(context).textTheme.titleSmall,
+              'GREGORIAN DATE INPUT',
+              style: theme.textTheme.labelSmall?.copyWith(
+                letterSpacing: 0.8,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               key: const Key('gregorian_input_field'),
               controller: _ctrl,
+              style: AppTheme.tabular(theme.textTheme.bodyLarge),
               decoration: const InputDecoration(
                 labelText: 'Date (YYYY-MM-DD)',
                 hintText: '2026-06-18',
@@ -231,7 +272,6 @@ class _GregorianInputPanelState extends State<_GregorianInputPanel> {
                 ActionChip(
                   label: const Text('Today'),
                   onPressed: () {
-                    final now = DateTime.now();
                     final s =
                         '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
                     _applyDate(s);
@@ -243,7 +283,7 @@ class _GregorianInputPanelState extends State<_GregorianInputPanel> {
                 ),
                 ActionChip(
                   label: const Text("New Year's Eve (Dec 31)"),
-                  onPressed: () => _applyDate('${DateTime.now().year}-12-31'),
+                  onPressed: () => _applyDate('${now.year}-12-31'),
                 ),
                 ActionChip(
                   label: const Text('Pick Date'),
@@ -251,7 +291,7 @@ class _GregorianInputPanelState extends State<_GregorianInputPanel> {
                   onPressed: () async {
                     final d = await showDatePicker(
                       context: context,
-                      initialDate: DateTime.now(),
+                      initialDate: now,
                       firstDate: DateTime(1900),
                       lastDate: DateTime(2200),
                     );
@@ -280,18 +320,20 @@ class _CotsworthInputPanel extends StatefulWidget {
 
 class _CotsworthInputPanelState extends State<_CotsworthInputPanel> {
   late final TextEditingController _yearCtrl;
+  final FocusNode _yearFocus = FocusNode();
 
   @override
   void initState() {
     super.initState();
-    final initialYear =
-        context.read<ConverterCubit>().state.cotsworthYear ?? DateTime.now().year;
+    final cubit = context.read<ConverterCubit>();
+    final initialYear = cubit.state.cotsworthYear ?? cubit.now().year;
     _yearCtrl = TextEditingController(text: '$initialYear');
   }
 
   @override
   void dispose() {
     _yearCtrl.dispose();
+    _yearFocus.dispose();
     super.dispose();
   }
 
@@ -299,138 +341,181 @@ class _CotsworthInputPanelState extends State<_CotsworthInputPanel> {
   Widget build(BuildContext context) {
     final state = context.watch<ConverterCubit>().state;
     final cubit = context.read<ConverterCubit>();
-    final year = state.cotsworthYear ?? DateTime.now().year;
-    if (_yearCtrl.text != '$year' && int.tryParse(_yearCtrl.text) != year) {
-      _yearCtrl.text = '$year';
-    }
+    final year = state.cotsworthYear ?? cubit.now().year;
     final isLeap = CotsworthConverter.isLeapYear(year);
     final theme = Theme.of(context);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Cotsworth Date Input', style: theme.textTheme.titleSmall),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                IconButton(
-                  tooltip: 'Previous year',
-                  onPressed: () {
-                    final next = (year - 1).clamp(1, 9999);
-                    _yearCtrl.text = '$next';
-                    cubit.setCotsworthYear(next);
-                  },
-                  icon: const Icon(Icons.remove_rounded),
+    return BlocListener<ConverterCubit, ConverterState>(
+      listenWhen: (prev, curr) => prev.cotsworthYear != curr.cotsworthYear,
+      listener: (context, nextState) {
+        final nextYear = nextState.cotsworthYear;
+        if (nextYear == null) return;
+        // Never overwrite while user is actively editing the year text field.
+        if (!_yearFocus.hasFocus && _yearCtrl.text != '$nextYear') {
+          _yearCtrl.text = '$nextYear';
+        }
+      },
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'COTSWORTH DATE INPUT',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  letterSpacing: 0.8,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
-                Expanded(
-                  child: TextField(
-                    key: const Key('cotsworth_year_field'),
-                    controller: _yearCtrl,
-                    textAlign: TextAlign.center,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Year'),
-                    onChanged: (v) {
-                      final y = int.tryParse(v);
-                      if (y != null && y >= 1 && y <= 9999) {
-                        cubit.setCotsworthYear(y);
-                      }
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Previous year',
+                    onPressed: () {
+                      final next = (year - 1).clamp(1, 9999);
+                      _yearCtrl.text = '$next';
+                      cubit.setCotsworthYear(next);
                     },
+                    icon: const Icon(Icons.remove_rounded),
                   ),
-                ),
-                IconButton(
-                  tooltip: 'Next year',
-                  onPressed: () {
-                    final next = (year + 1).clamp(1, 9999);
-                    _yearCtrl.text = '$next';
-                    cubit.setCotsworthYear(next);
-                  },
-                  icon: const Icon(Icons.add_rounded),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Tooltip(
-              message: isLeap
-                  ? 'Select date type'
-                  : 'Leap Day is only available in leap years',
-              child: SegmentedButton<CotsworthDayType>(
-                segments: [
-                  const ButtonSegment(
-                    value: CotsworthDayType.regular,
-                    label: Text('Regular'),
+                  Expanded(
+                    child: TextField(
+                      key: const Key('cotsworth_year_field'),
+                      controller: _yearCtrl,
+                      focusNode: _yearFocus,
+                      textAlign: TextAlign.center,
+                      keyboardType: TextInputType.number,
+                      style: AppTheme.tabular(theme.textTheme.titleMedium),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(4),
+                      ],
+                      decoration: const InputDecoration(labelText: 'Year'),
+                      onChanged: (v) {
+                        final y = int.tryParse(v);
+                        if (y != null && y >= 1 && y <= 9999) {
+                          // Only record history once a realistic 4-digit year is typed.
+                          cubit.setCotsworthYear(
+                            y,
+                            recordHistory: v.length == 4,
+                          );
+                        }
+                      },
+                    ),
                   ),
-                  ButtonSegment(
-                    value: CotsworthDayType.leapDay,
-                    label: const Text('Leap Day'),
-                    enabled: isLeap,
-                  ),
-                  const ButtonSegment(
-                    value: CotsworthDayType.yearDay,
-                    label: Text('Year Day'),
+                  IconButton(
+                    tooltip: 'Next year',
+                    onPressed: () {
+                      final next = (year + 1).clamp(1, 9999);
+                      _yearCtrl.text = '$next';
+                      cubit.setCotsworthYear(next);
+                    },
+                    icon: const Icon(Icons.add_rounded),
                   ),
                 ],
-                selected: {state.cotsworthDayType},
-                onSelectionChanged: (s) => cubit.setCotsworthDayType(s.first),
               ),
-            ),
-            if (state.cotsworthDayType == CotsworthDayType.regular) ...[
               const SizedBox(height: 12),
-              DropdownButtonFormField<CotsworthMonth>(
-                key: ValueKey(
-                  'month_${state.cotsworthMonth ?? CotsworthMonth.january}',
-                ),
-                initialValue: state.cotsworthMonth ?? CotsworthMonth.january,
-                decoration: const InputDecoration(labelText: 'Month'),
-                items: CotsworthMonth.values
-                    .map(
-                      (m) => DropdownMenuItem(
-                        value: m,
-                        child: Text(
-                          '${m.number}. ${m.fullName}',
-                          style: TextStyle(
-                            color: m.isSol
-                                ? AppTheme.solAccent(context)
-                                : null,
-                            fontWeight: m.isSol ? FontWeight.w700 : null,
-                          ),
+              Tooltip(
+                message: isLeap
+                    ? 'Select date type'
+                    : 'Leap Day is only available in leap years',
+                child: SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<CotsworthDayType>(
+                    segments: [
+                      const ButtonSegment(
+                        value: CotsworthDayType.regular,
+                        label: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('Regular', maxLines: 1),
                         ),
                       ),
-                    )
-                    .toList(),
-                onChanged: (m) {
-                  if (m != null) cubit.setCotsworthMonth(m);
-                },
+                      ButtonSegment(
+                        value: CotsworthDayType.leapDay,
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('Leap Day', maxLines: 1),
+                        ),
+                        enabled: isLeap,
+                      ),
+                      const ButtonSegment(
+                        value: CotsworthDayType.yearDay,
+                        label: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('Year Day', maxLines: 1),
+                        ),
+                      ),
+                    ],
+                    selected: {state.cotsworthDayType},
+                    onSelectionChanged: (s) =>
+                        cubit.setCotsworthDayType(s.first),
+                  ),
+                ),
               ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<int>(
-                key: ValueKey('day_${state.cotsworthDay.clamp(1, 28)}'),
-                initialValue: state.cotsworthDay.clamp(1, 28),
-                decoration: const InputDecoration(labelText: 'Day (1–28)'),
-                items: List.generate(28, (i) {
-                  final d = i + 1;
-                  final weekday = const [
-                    'Sunday',
-                    'Monday',
-                    'Tuesday',
-                    'Wednesday',
-                    'Thursday',
-                    'Friday',
-                    'Saturday',
-                  ][(d - 1) % 7];
-                  return DropdownMenuItem(
-                    value: d,
-                    child: Text('Day $d — $weekday'),
-                  );
-                }),
-                onChanged: (d) {
-                  if (d != null) cubit.setCotsworthDay(d);
-                },
-              ),
+              if (state.cotsworthDayType == CotsworthDayType.regular) ...[
+                const SizedBox(height: 12),
+                DropdownButtonFormField<CotsworthMonth>(
+                  key: ValueKey(
+                    'month_${state.cotsworthMonth ?? CotsworthMonth.january}',
+                  ),
+                  isExpanded: true,
+                  initialValue: state.cotsworthMonth ?? CotsworthMonth.january,
+                  decoration: const InputDecoration(labelText: 'Month'),
+                  items: CotsworthMonth.values
+                      .map(
+                        (m) => DropdownMenuItem(
+                          value: m,
+                          child: Text(
+                            '${m.number}. ${m.fullName}',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: m.isSol
+                                  ? AppTheme.solAccent(context)
+                                  : null,
+                              fontWeight: m.isSol ? FontWeight.w700 : null,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (m) {
+                    if (m != null) cubit.setCotsworthMonth(m);
+                  },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<int>(
+                  key: ValueKey('day_${state.cotsworthDay.clamp(1, 28)}'),
+                  isExpanded: true,
+                  initialValue: state.cotsworthDay.clamp(1, 28),
+                  decoration: const InputDecoration(labelText: 'Day (1–28)'),
+                  items: List.generate(28, (i) {
+                    final d = i + 1;
+                    final weekday = const [
+                      'Sunday',
+                      'Monday',
+                      'Tuesday',
+                      'Wednesday',
+                      'Thursday',
+                      'Friday',
+                      'Saturday',
+                    ][(d - 1) % 7];
+                    return DropdownMenuItem(
+                      value: d,
+                      child: Text(
+                        'Day $d — $weekday',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  }),
+                  onChanged: (d) {
+                    if (d != null) cubit.setCotsworthDay(d);
+                  },
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -445,34 +530,52 @@ class _ResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final gregFmt = DateFormat('EEEE, MMMM d, y');
-    final isSol = result.cotsworth is RegularCotsworthDate &&
+    final isSol =
+        result.cotsworth is RegularCotsworthDate &&
         (result.cotsworth as RegularCotsworthDate).month.isSol;
 
+    final accent = isSol
+        ? AppTheme.solAccent(context)
+        : result.cotsworth.isIntercalary
+        ? AppTheme.intercalaryAccent(context)
+        : theme.colorScheme.primary;
+
     return Card(
-      color: theme.colorScheme.primaryContainer,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: accent.withAlpha(110), width: 1.25),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Converted Result', style: theme.textTheme.labelMedium),
+            Text(
+              'CONVERTED RESULT',
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontSize: 10,
+                letterSpacing: 0.9,
+                color: accent,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const SizedBox(height: 8),
             Text(
               result.cotsworth.formatFull(),
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: isSol
-                    ? AppTheme.solAccent(context)
-                    : result.cotsworth.isIntercalary
-                        ? AppTheme.intercalaryAccent(context)
-                        : null,
+                color: isSol || result.cotsworth.isIntercalary
+                    ? accent
+                    : theme.colorScheme.onSurface,
               ),
             ),
             Text(
               result.cotsworth.weekdayLabel,
-              style: theme.textTheme.bodyMedium,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
-            const Divider(height: 20),
+            const Divider(height: 24),
             Text(
               gregFmt.format(result.gregorian),
               style: theme.textTheme.bodyLarge?.copyWith(
@@ -483,10 +586,10 @@ class _ResultCard extends StatelessWidget {
             Text(
               result.cotsworth.cycleAlignmentLabel,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onPrimaryContainer.withAlpha(200),
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -500,20 +603,18 @@ class _ResultCard extends StatelessWidget {
                       const SnackBar(content: Text('Copied to clipboard')),
                     );
                   },
-                  icon: const Icon(Icons.copy_rounded, size: 18),
+                  icon: const Icon(Icons.copy_rounded, size: 17),
                   label: const Text('Copy Result'),
                 ),
                 FilledButton.icon(
                   key: const Key('view_on_calendar_button'),
                   onPressed: () {
-                    context
-                        .read<CalendarBloc>()
-                        .add(CalendarJumpToDate(result.cotsworth));
-                    context
-                        .read<NavigationCubit>()
-                        .select(AppDestination.home);
+                    context.read<CalendarBloc>().add(
+                      CalendarJumpToDate(result.cotsworth),
+                    );
+                    context.read<NavigationCubit>().select(AppDestination.home);
                   },
-                  icon: const Icon(Icons.calendar_month_rounded, size: 18),
+                  icon: const Icon(Icons.calendar_month_rounded, size: 17),
                   label: const Text('View on Calendar'),
                 ),
               ],

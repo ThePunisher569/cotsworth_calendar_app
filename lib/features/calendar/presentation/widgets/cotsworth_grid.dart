@@ -8,12 +8,16 @@ import '../bloc/calendar_bloc.dart';
 import '../bloc/calendar_state.dart';
 import 'day_cell.dart';
 
+/// 7×4 perpetual grid showing all 28 days of the focused Cotsworth month.
+///
+/// Uses single-letter muted weekday headers (`S M T W T F S`) matching the
+/// attached reference calendar widget.
 class CotsworthGrid extends StatelessWidget {
   const CotsworthGrid({super.key, this.onDayTapped});
 
   final VoidCallback? onDayTapped;
 
-  static const _weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  static const _weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +29,8 @@ class CotsworthGrid extends StatelessWidget {
 
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 220),
+          switchInCurve: Curves.easeOut,
+          switchOutCurve: Curves.easeIn,
           child: Column(
             key: ValueKey('${state.focusedYear}-${state.focusedMonth.number}'),
             children: [
@@ -39,7 +45,9 @@ class CotsworthGrid extends StatelessWidget {
                               d,
                               style: AppTheme.tabular(
                                 theme.textTheme.labelSmall?.copyWith(
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                  letterSpacing: 0.4,
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
                               ),
@@ -50,37 +58,47 @@ class CotsworthGrid extends StatelessWidget {
                       .toList(),
                 ),
               ),
-              const SizedBox(height: 6),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 7,
-                    childAspectRatio:
-                        MediaQuery.sizeOf(context).width < 600 ? 0.8 : 0.95,
-                    crossAxisSpacing: 4,
-                    mainAxisSpacing: 4,
-                  ),
-                  itemCount: 28,
-                  itemBuilder: (context, index) {
-                    final entry = days[index];
-                    final isToday =
-                        entry.gregorian.isSameCalendarDate(todayGreg);
-                    final isSelected =
-                        state.selectedDate is RegularCotsworthDate &&
+              const SizedBox(height: 8),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.maxWidth;
+                  final aspectRatio = width < 420
+                      ? 0.84
+                      : width < 680
+                      ? 0.96
+                      : 1.08;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 7,
+                        childAspectRatio: aspectRatio,
+                        crossAxisSpacing: 4,
+                        mainAxisSpacing: 4,
+                      ),
+                      itemCount: 28,
+                      itemBuilder: (context, index) {
+                        final entry = days[index];
+                        final isToday = entry.gregorian.isSameCalendarDate(
+                          todayGreg,
+                        );
+                        final isSelected =
+                            state.selectedDate is RegularCotsworthDate &&
                             state.selectedDate == entry.cotsworth;
 
-                    return DayCell(
-                      cotsworth: entry.cotsworth,
-                      gregorian: entry.gregorian,
-                      isToday: isToday,
-                      isSelected: isSelected,
-                      onTap: onDayTapped,
-                    );
-                  },
-                ),
+                        return DayCell(
+                          cotsworth: entry.cotsworth,
+                          gregorian: entry.gregorian,
+                          isToday: isToday,
+                          isSelected: isSelected,
+                          onTap: onDayTapped,
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
             ],
           ),

@@ -7,16 +7,20 @@ import '../../data/converter_history_repository.dart';
 import 'converter_state.dart';
 
 class ConverterCubit extends Cubit<ConverterState> {
-  ConverterCubit(this._historyRepo)
-      : super(
-          ConverterState(
-            cotsworthYear: DateTime.now().year,
-            cotsworthMonth: CotsworthMonth.january,
-            history: _historyRepo.loadHistory(),
-          ),
-        );
+  ConverterCubit(this._historyRepo, {DateTime Function()? clock})
+    : _clock = clock ?? DateTime.now,
+      super(
+        ConverterState(
+          cotsworthYear: (clock ?? DateTime.now)().year,
+          cotsworthMonth: CotsworthMonth.january,
+          history: _historyRepo.loadHistory(),
+        ),
+      );
 
   final ConverterHistoryRepository _historyRepo;
+  final DateTime Function() _clock;
+
+  DateTime now() => _clock();
 
   void setDirection(ConversionDirection dir) {
     emit(state.copyWith(direction: dir, clearResult: true, clearError: true));
@@ -44,7 +48,9 @@ class ConverterCubit extends Cubit<ConverterState> {
             cotsworthMonth: c is RegularCotsworthDate
                 ? c.month
                 : state.cotsworthMonth ?? CotsworthMonth.january,
-            cotsworthDay: c is RegularCotsworthDate ? c.day : state.cotsworthDay,
+            cotsworthDay: c is RegularCotsworthDate
+                ? c.day
+                : state.cotsworthDay,
             cotsworthDayType: dayType,
             clearError: true,
           ),
@@ -116,7 +122,7 @@ class ConverterCubit extends Cubit<ConverterState> {
     _tryConvertGregorian(value);
   }
 
-  void setCotsworthYear(int year) {
+  void setCotsworthYear(int year, {bool recordHistory = true}) {
     final clamped = year.clamp(1, 9999);
     var nextDayType = state.cotsworthDayType;
     if (nextDayType == CotsworthDayType.leapDay &&
@@ -131,7 +137,7 @@ class ConverterCubit extends Cubit<ConverterState> {
         clearResult: true,
       ),
     );
-    _tryConvertCotsworth();
+    _tryConvertCotsworth(recordHistory: recordHistory);
   }
 
   void setCotsworthMonth(CotsworthMonth month) {
@@ -178,7 +184,14 @@ class ConverterCubit extends Cubit<ConverterState> {
         '${d.day.toString().padLeft(2, '0')}';
   }
 
-  void _recordHistory(({CotsworthDate cotsworth, DateTime gregorian}) item) {
+  void _recordHistory(
+    ({CotsworthDate cotsworth, DateTime gregorian}) item, {
+    bool persist = true,
+  }) {
+    if (!persist) {
+      emit(state.copyWith(result: item, clearError: true));
+      return;
+    }
     final deduped = [
       item,
       ...state.history.where((e) => e.gregorian != item.gregorian),
@@ -194,7 +207,9 @@ class ConverterCubit extends Cubit<ConverterState> {
     final match = RegExp(r'^(\d{4})-(\d{1,2})-(\d{1,2})$').firstMatch(trimmed);
     if (match == null) {
       if (trimmed.length >= 10) {
-        emit(state.copyWith(error: 'Use YYYY-MM-DD format (e.g., 2026-06-18).'));
+        emit(
+          state.copyWith(error: 'Use YYYY-MM-DD format (e.g., 2026-06-18).'),
+        );
       }
       return;
     }
@@ -222,7 +237,7 @@ class ConverterCubit extends Cubit<ConverterState> {
     _recordHistory((cotsworth: cotsworth, gregorian: date));
   }
 
-  void _tryConvertCotsworth() {
+  void _tryConvertCotsworth({bool recordHistory = true}) {
     if (state.direction != ConversionDirection.cotsworthToGregorian) return;
     final year = state.cotsworthYear;
     if (year == null) return;
@@ -247,7 +262,10 @@ class ConverterCubit extends Cubit<ConverterState> {
           );
       }
       final greg = CotsworthConverter.toGregorian(cotsworth);
-      _recordHistory((cotsworth: cotsworth, gregorian: greg));
+      _recordHistory((
+        cotsworth: cotsworth,
+        gregorian: greg,
+      ), persist: recordHistory);
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
     }

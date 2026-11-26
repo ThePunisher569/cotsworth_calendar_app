@@ -10,8 +10,14 @@ import '../../../../shared/widgets/navigation_cubit.dart';
 import '../../../converter/presentation/bloc/converter_cubit.dart';
 import '../bloc/calendar_bloc.dart';
 
+/// Detail panel showing full Cotsworth & 28-day cycle metadata for the selected day.
+///
+/// Embedded directly on desktop, or opened inside a modal bottom sheet on
+/// mobile/tablet with [onAfterNavigate] closing the sheet automatically.
 class DayDetailSheet extends StatelessWidget {
-  const DayDetailSheet({super.key});
+  const DayDetailSheet({super.key, this.onAfterNavigate});
+
+  final VoidCallback? onAfterNavigate;
 
   @override
   Widget build(BuildContext context) {
@@ -31,12 +37,19 @@ class DayDetailSheet extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.nightlight_round,
-                  size: 18,
-                  color: theme.colorScheme.primary,
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withAlpha(28),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.nightlight_round,
+                    size: 18,
+                    color: theme.colorScheme.primary,
+                  ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'Date & 28-Day Cycle Details',
@@ -48,7 +61,7 @@ class DayDetailSheet extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             _InfoRow(
               label: 'Cotsworth Date',
               value: date.isIntercalary
@@ -57,27 +70,43 @@ class DayDetailSheet extends StatelessWidget {
               accent: date is RegularCotsworthDate && date.month.isSol
                   ? AppTheme.solAccent(context)
                   : date.isIntercalary
-                      ? AppTheme.intercalaryAccent(context)
-                      : null,
+                  ? AppTheme.intercalaryAccent(context)
+                  : null,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             _InfoRow(
               label: 'Gregorian Equivalent',
               value: gregFmt.format(greg),
             ),
-            const SizedBox(height: 12),
-            Text(
-              'Year Progress (${(date.yearProgress * 100).toStringAsFixed(1)}%)',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+            const SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'YEAR PROGRESS',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontSize: 10,
+                    letterSpacing: 0.8,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                Text(
+                  '${(date.yearProgress * 100).toStringAsFixed(1)}%',
+                  style: AppTheme.tabular(
+                    theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 6),
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(value: date.yearProgress),
             ),
-            const Divider(height: 24),
+            const Divider(height: 26),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -87,37 +116,51 @@ class DayDetailSheet extends StatelessWidget {
                 _chip(date.cycleAlignmentLabel),
               ],
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      final text =
-                          '${date.formatFull()} = ${gregFmt.format(greg)}';
-                      Clipboard.setData(ClipboardData(text: text));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Copied both dates')),
-                      );
-                    },
-                    icon: const Icon(Icons.copy_rounded, size: 18),
-                    label: const Text('Copy Both'),
+            const SizedBox(height: 18),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final copyBtn = OutlinedButton.icon(
+                  onPressed: () {
+                    final text =
+                        '${date.formatFull()} = ${gregFmt.format(greg)}';
+                    Clipboard.setData(ClipboardData(text: text));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Copied both dates')),
+                    );
+                  },
+                  icon: const Icon(Icons.copy_rounded, size: 17),
+                  label: const Text('Copy Both'),
+                );
+                final convertBtn = FilledButton.tonalIcon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary.withAlpha(32),
+                    foregroundColor: theme.colorScheme.primary,
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: FilledButton.tonalIcon(
-                    onPressed: () {
-                      context.read<ConverterCubit>().openFromCalendar(date);
-                      context
-                          .read<NavigationCubit>()
-                          .select(AppDestination.convert);
-                    },
-                    icon: const Icon(Icons.swap_horiz_rounded, size: 18),
-                    label: const Text('Open in Converter'),
-                  ),
-                ),
-              ],
+                  onPressed: () {
+                    context.read<ConverterCubit>().openFromCalendar(date);
+                    context.read<NavigationCubit>().select(
+                      AppDestination.convert,
+                    );
+                    onAfterNavigate?.call();
+                  },
+                  icon: const Icon(Icons.swap_horiz_rounded, size: 17),
+                  label: const Text('Open in Converter'),
+                );
+
+                if (constraints.maxWidth < 330) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [copyBtn, const SizedBox(height: 8), convertBtn],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: copyBtn),
+                    const SizedBox(width: 8),
+                    Expanded(child: convertBtn),
+                  ],
+                );
+              },
             ),
           ],
         ),
@@ -146,11 +189,14 @@ class _InfoRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
-          style: theme.textTheme.labelSmall
-              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          label.toUpperCase(),
+          style: theme.textTheme.labelSmall?.copyWith(
+            fontSize: 10,
+            letterSpacing: 0.8,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 3),
         Text(
           value,
           style: theme.textTheme.bodyLarge?.copyWith(

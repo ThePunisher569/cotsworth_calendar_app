@@ -29,6 +29,8 @@ class AdaptiveScaffold extends StatelessWidget {
 
     final body = AnimatedSwitcher(
       duration: const Duration(milliseconds: 240),
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeIn,
       child: _buildBody(selectedIndex),
     );
 
@@ -64,10 +66,8 @@ class AdaptiveScaffold extends StatelessWidget {
               context.read<NavigationCubit>().selectIndex(i),
           destinations: _destinations
               .map(
-                (d) => NavigationDestination(
-                  icon: Icon(d.icon),
-                  label: d.label,
-                ),
+                (d) =>
+                    NavigationDestination(icon: Icon(d.icon), label: d.label),
               )
               .toList(),
         ),
@@ -196,7 +196,9 @@ class AdaptiveScaffold extends StatelessWidget {
               leading: Icon(
                 isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
               ),
-              title: Text(isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'),
+              title: Text(
+                isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+              ),
               onTap: () => context.read<ThemeCubit>().toggleTheme(),
             ),
             const SizedBox(height: 8),

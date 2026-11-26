@@ -22,10 +22,14 @@ class CalendarScreen extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => BlocProvider.value(
+      builder: (sheetContext) => BlocProvider.value(
         value: context.read<CalendarBloc>(),
-        child: const SafeArea(
-          child: SingleChildScrollView(child: DayDetailSheet()),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: DayDetailSheet(
+              onAfterNavigate: () => Navigator.of(sheetContext).pop(),
+            ),
+          ),
         ),
       ),
     );
@@ -62,7 +66,7 @@ class CalendarScreen extends StatelessWidget {
           children: [
             // Home H1 Heading + Logo + 28-Day Cycle Alignment Subtitle
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Row(
                 children: [
                   const CotsworthLogo(size: 44),
@@ -76,10 +80,11 @@ class CalendarScreen extends StatelessWidget {
                           child: Text(
                             'Cotsworth 13-Month Calendar',
                             style: theme.textTheme.headlineLarge?.copyWith(
-                              fontSize: isDesktop ? 28 : 22,
+                              fontSize: isDesktop ? 26 : 20,
                             ),
                           ),
                         ),
+                        const SizedBox(height: 2),
                         Text(
                           '12 Months + Sol · 28-Day Lunar & Menstrual Cycle Aligned',
                           style: theme.textTheme.bodySmall?.copyWith(
@@ -92,11 +97,23 @@ class CalendarScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const MonthHeader(),
-            CotsworthGrid(
-              onDayTapped: isDesktop
-                  ? null
-                  : () => _openDetailsBottomSheet(context),
+            // Floating iOS-style calendar widget card containing MonthHeader + Grid
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(4, 10, 4, 14),
+                child: Column(
+                  children: [
+                    const MonthHeader(),
+                    const SizedBox(height: 4),
+                    CotsworthGrid(
+                      onDayTapped: isDesktop
+                          ? null
+                          : () => _openDetailsBottomSheet(context),
+                    ),
+                  ],
+                ),
+              ),
             ),
             IntercalaryBanner(
               onBannerTapped: isDesktop
@@ -126,9 +143,7 @@ class CalendarScreen extends StatelessWidget {
     return Column(
       children: [
         Expanded(child: calendarBody),
-        _MobileSummaryBar(
-          onTap: () => _openDetailsBottomSheet(context),
-        ),
+        _MobileSummaryBar(onTap: () => _openDetailsBottomSheet(context)),
       ],
     );
   }
@@ -150,15 +165,33 @@ class _MobileSummaryBar extends StatelessWidget {
             : date.cycleAlignmentLabel;
 
         return Material(
-          color: theme.colorScheme.surfaceContainerHigh,
+          color: theme.colorScheme.surfaceContainer,
           child: InkWell(
             onTap: onTap,
-            child: Padding(
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: theme.colorScheme.outlineVariant,
+                    width: 0.75,
+                  ),
+                ),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Row(
                 children: [
-                  Icon(Icons.event_note_rounded,
-                      color: theme.colorScheme.primary),
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withAlpha(28),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.event_note_rounded,
+                      size: 18,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -176,6 +209,8 @@ class _MobileSummaryBar extends StatelessWidget {
                         Text(
                           cyclePhase,
                           style: theme.textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.2,
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                           maxLines: 1,
@@ -184,7 +219,10 @@ class _MobileSummaryBar extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Icon(Icons.expand_less_rounded),
+                  Icon(
+                    Icons.expand_less_rounded,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ],
               ),
             ),

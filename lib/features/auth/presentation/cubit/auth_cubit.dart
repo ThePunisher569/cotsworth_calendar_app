@@ -1,12 +1,15 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../data/auth_repository.dart';
 import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   AuthCubit(this._repo)
-      : super(_repo.getCurrentUser() != null
+    : super(
+        _repo.getCurrentUser() != null
             ? AuthAuthenticated(_repo.getCurrentUser()!)
-            : const AuthUnauthenticated());
+            : const AuthUnauthenticated(),
+      );
 
   final AuthRepository _repo;
 
@@ -15,16 +18,20 @@ class AuthCubit extends Cubit<AuthState> {
     required String password,
   }) async {
     if (username.trim().isEmpty || password.isEmpty) {
-      emit(const AuthUnauthenticated(
-        errorMessage: 'Please enter both username and password.',
-      ));
+      emit(
+        const AuthUnauthenticated(
+          errorMessage: 'Please enter both username and password.',
+        ),
+      );
       return;
     }
     final user = await _repo.signIn(username: username, password: password);
     if (user == null) {
-      emit(const AuthUnauthenticated(
-        errorMessage: 'Invalid credentials. Use: Guest / guest',
-      ));
+      emit(
+        const AuthUnauthenticated(
+          errorMessage: 'Invalid credentials. Use: Guest / guest',
+        ),
+      );
       return;
     }
     emit(AuthAuthenticated(user));

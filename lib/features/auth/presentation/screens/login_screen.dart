@@ -30,9 +30,9 @@ class _LoginScreenState extends State<LoginScreen> {
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     context.read<AuthCubit>().login(
-          username: _userCtrl.text,
-          password: _passCtrl.text,
-        );
+      username: _userCtrl.text,
+      password: _passCtrl.text,
+    );
   }
 
   @override
@@ -120,8 +120,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               decoration: InputDecoration(
                                 labelText: 'Password',
                                 hintText: 'guest',
-                                prefixIcon:
-                                    const Icon(Icons.lock_outline_rounded),
+                                prefixIcon: const Icon(
+                                  Icons.lock_outline_rounded,
+                                ),
                                 suffixIcon: IconButton(
                                   onPressed: () =>
                                       setState(() => _obscure = !_obscure),
@@ -141,7 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: theme.colorScheme.errorContainer,
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(14),
                                 ),
                                 child: Text(
                                   error,
@@ -158,9 +159,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
-                                color:
-                                    theme.colorScheme.surfaceContainerHighest,
-                                borderRadius: BorderRadius.circular(10),
+                                color: theme.colorScheme.surfaceContainerHigh,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: theme.colorScheme.outlineVariant,
+                                ),
                               ),
                               child: Row(
                                 children: [
@@ -170,8 +173,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                     color: theme.colorScheme.primary,
                                   ),
                                   const SizedBox(width: 8),
-                                  const Expanded(
-                                    child: Text('Temp Credentials: Guest / guest'),
+                                  Expanded(
+                                    child: Text(
+                                      'Temp Credentials: Guest / guest',
+                                      style: theme.textTheme.bodySmall,
+                                    ),
                                   ),
                                   TextButton(
                                     onPressed: () {

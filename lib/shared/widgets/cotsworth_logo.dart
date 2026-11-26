@@ -9,11 +9,7 @@ import '../../core/theme/app_theme.dart';
 /// Renders a 13-dot solar/lunar orbital ring (highlighting the 7th month Sol)
 /// surrounding a 28-day lunar crescent emblem.
 class CotsworthLogo extends StatelessWidget {
-  const CotsworthLogo({
-    super.key,
-    this.size = 40,
-    this.showWordmark = false,
-  });
+  const CotsworthLogo({super.key, this.size = 40, this.showWordmark = false});
 
   final double size;
   final bool showWordmark;
@@ -28,7 +24,7 @@ class CotsworthLogo extends StatelessWidget {
         painter: _CotsworthLogoPainter(
           primaryColor: theme.colorScheme.primary,
           solColor: AppTheme.solAccent(context),
-          surfaceColor: theme.colorScheme.surfaceContainerHighest,
+          surfaceColor: theme.colorScheme.surfaceContainerHigh,
         ),
       ),
     );
@@ -54,6 +50,7 @@ class CotsworthLogo extends StatelessWidget {
             Text(
               '13 × 28 Cycle',
               style: theme.textTheme.labelSmall?.copyWith(
+                fontSize: 10,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
@@ -84,7 +81,7 @@ class _CotsworthLogoPainter extends CustomPainter {
     canvas.drawCircle(center, radius, bgPaint);
 
     final ringPaint = Paint()
-      ..color = primaryColor.withAlpha(70)
+      ..color = primaryColor.withAlpha(65)
       ..style = PaintingStyle.stroke
       ..strokeWidth = math.max(1.2, size.shortestSide * 0.045);
     canvas.drawCircle(center, radius * 0.76, ringPaint);
