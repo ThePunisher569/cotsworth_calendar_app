@@ -1,5 +1,8 @@
 # Cotsworth Calendar App
 
+## 👀Live Web App Demo👀
+[![Live App](https://ThePunisher569.github.io/cotsworth_calendar_app)](https://ThePunisher569.github.io/cotsworth_calendar_app)
+
 A cross-platform **13-month, 28-day calendar** application built with **Flutter** and **Firebase**, implementing the International Fixed Calendar (Cotsworth Plan) across Android, iOS, Web, macOS, Windows, and Linux.
 
 ---
@@ -75,7 +78,7 @@ cotsworth_calendar_app/
 ### Prerequisites
 
 - Flutter SDK (stable channel, Dart 3+)
-- Firebase CLI & FlutterFire CLI (`dart pub global activate flutterfire_cli`)
+- Firebase CLI & FlutterFire CLI (`dart pub global activate flutterfire_cli`) (`Future Feature`)
 
 ### Setup
 
@@ -83,7 +86,7 @@ cotsworth_calendar_app/
    ```bash
    flutter pub get
    ```
-2. **Configure Firebase (if `firebase_options.dart` is git-ignored):**
+2. **Configure Firebase (if `firebase_options.dart` is git-ignored):** (Optional)
    ```bash
    flutterfire configure
    ```
@@ -131,7 +134,7 @@ flutter build linux --release
 ---
 
 ## Screenshots
-
+(will add later....)
 UI and theme reference captures are kept in [`theme_ss/`](./theme_ss/). Update the paths below to embed them directly in GitHub:
 
 ```markdown
@@ -139,3 +142,5 @@ UI and theme reference captures are kept in [`theme_ss/`](./theme_ss/). Update t
 |---|---|
 | ![Light](theme_ss/light.png) | ![Dark](theme_ss/dark.png) |
 ```
+
+
