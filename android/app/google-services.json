@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "913978648287",
+    "project_id": "cotsworth-calendar-app",
+    "storage_bucket": "cotsworth-calendar-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:913978648287:android:e1ce72543f084b78f2ab6a",
+        "android_client_info": {
+          "package_name": "com.org.cotsworth_calendar_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAev3BZgVOQ87gtVLzd8pyB9KDyIBQOi8g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
