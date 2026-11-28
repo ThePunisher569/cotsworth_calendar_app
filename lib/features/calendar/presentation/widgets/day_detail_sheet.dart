@@ -6,7 +6,8 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../core/calendar_engine/cotsworth_date.dart';
 import '../../../../core/calendar_engine/cotsworth_extensions.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../shared/widgets/navigation_cubit.dart';
+import '../../../../core/utils/date_clipboard_formatter.dart';
+import '../../../../shared/navigation/navigation_cubit.dart';
 import '../../../converter/presentation/bloc/converter_cubit.dart';
 import '../bloc/calendar_bloc.dart';
 
@@ -19,18 +20,20 @@ class DayDetailSheet extends StatelessWidget {
 
   final VoidCallback? onAfterNavigate;
 
+  static final DateFormat _gregFmt = DateFormat('EEEE, MMMM d, y');
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final state = context.watch<CalendarBloc>().state;
-    final date = state.selectedDate;
+    final date = context.select<CalendarBloc, CotsworthDate>(
+      (bloc) => bloc.state.selectedDate,
+    );
     final greg = date.toGregorian();
-    final gregFmt = DateFormat('EEEE, MMMM d, y');
 
     return Card(
-      margin: const EdgeInsets.all(12),
+      margin: const EdgeInsetsDirectional.all(12),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsetsDirectional.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,7 +41,7 @@ class DayDetailSheet extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(7),
+                  padding: const EdgeInsetsDirectional.all(7),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withAlpha(28),
                     borderRadius: BorderRadius.circular(10),
@@ -76,7 +79,7 @@ class DayDetailSheet extends StatelessWidget {
             const SizedBox(height: 12),
             _InfoRow(
               label: 'Gregorian Equivalent',
-              value: gregFmt.format(greg),
+              value: _gregFmt.format(greg),
             ),
             const SizedBox(height: 14),
             Row(
@@ -103,8 +106,12 @@ class DayDetailSheet extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(value: date.yearProgress),
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: date.yearProgress,
+                minHeight: 8,
+                borderRadius: BorderRadius.circular(999),
+              ),
             ),
             const Divider(height: 26),
             Wrap(
@@ -120,13 +127,22 @@ class DayDetailSheet extends StatelessWidget {
             LayoutBuilder(
               builder: (context, constraints) {
                 final copyBtn = OutlinedButton.icon(
+                  key: const Key('copy_both_button'),
                   onPressed: () {
-                    final text =
-                        '${date.formatFull()} = ${gregFmt.format(greg)}';
-                    Clipboard.setData(ClipboardData(text: text));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Copied both dates')),
+                    final text = DateClipboardFormatter.formatCopyBoth(
+                      gregorian: greg,
+                      cotsworth: date,
                     );
+                    Clipboard.setData(ClipboardData(text: text));
+                    ScaffoldMessenger.of(context)
+                      ..hideCurrentSnackBar()
+                      ..showSnackBar(
+                        const SnackBar(
+                          content: Text('Copied both dates'),
+                          behavior: SnackBarBehavior.floating,
+                          duration: Duration(seconds: 3),
+                        ),
+                      );
                   },
                   icon: const Icon(Icons.copy_rounded, size: 17),
                   label: const Text('Copy Both'),

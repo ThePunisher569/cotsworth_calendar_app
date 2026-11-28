@@ -1,0 +1,50 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isValidUserPayload(uid) {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'uid',
+          'displayName',
+          'email',
+          'calendarSystem',
+          'createdAt',
+          'updatedAt',
+          'lastLoginAt'
+        ]) &&
+        data.uid == uid &&
+        (!('displayName' in data) ||
+          (data.displayName is string && data.displayName.size() <= 80)) &&
+        (!('email' in data) ||
+          data.email == null ||
+          (data.email is string && data.email.size() <= 254)) &&
+        (!('calendarSystem' in data) ||
+          data.calendarSystem == 'cotsworth_13x28');
+    }
+
+    // Per-user private profile & calendar records
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid) && isValidUserPayload(uid);
+      allow delete: if isOwner(uid);
+
+      match /{subcollection}/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // Deny all other unauthenticated or cross-user access by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

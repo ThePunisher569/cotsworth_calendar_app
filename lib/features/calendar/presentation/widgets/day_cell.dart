@@ -4,15 +4,14 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../../core/calendar_engine/cotsworth_date.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/motion_cubit.dart';
 import '../bloc/calendar_bloc.dart';
 import '../bloc/calendar_event.dart';
 
 /// Single day tile inside the 7×4 perpetual Cotsworth grid.
 ///
-/// Styled after the dark iOS calendar widget:
-/// - Today rendered with a crisp coral-red circular highlight around the date
-/// - Weekend columns (Sun/Sat) subtly dimmed (`onSurfaceVariant`) vs crisp white Mon–Fri
-/// - Subtle Gregorian sub-label (`MMM d`) and month-boundary dot
+/// Uses cached [DateFormat] instances and avoids heavy shaders/BackdropFilter
+/// so all 28 cells stay well within a 60/120 Hz frame budget.
 class DayCell extends StatefulWidget {
   const DayCell({
     super.key,
@@ -34,17 +33,21 @@ class DayCell extends StatefulWidget {
 }
 
 class _DayCellState extends State<DayCell> {
+  static final DateFormat _shortGregFmt = DateFormat('MMM d');
+  static final DateFormat _fullGregFmt = DateFormat('MMMM d, y');
+
   bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final reduceMotion = MotionCubit.shouldReduceMotion(context);
     final isSol = widget.cotsworth.month.isSol;
     final isWeekend =
         widget.cotsworth.weekdayIndex == 0 ||
         widget.cotsworth.weekdayIndex == 6;
-    final gregLabel = DateFormat('MMM d').format(widget.gregorian);
-    final fullGregLabel = DateFormat('MMMM d, y').format(widget.gregorian);
+    final gregLabel = _shortGregFmt.format(widget.gregorian);
+    final fullGregLabel = _fullGregFmt.format(widget.gregorian);
 
     // Gregorian month transition occurs on the 1st of a Gregorian month.
     final isMonthBoundary =
@@ -85,6 +88,10 @@ class _DayCellState extends State<DayCell> {
           : theme.colorScheme.onSurfaceVariant.withAlpha(190);
     }
 
+    final animDuration = reduceMotion
+        ? Duration.zero
+        : const Duration(milliseconds: 150);
+
     return Semantics(
       button: true,
       selected: widget.isSelected,
@@ -94,9 +101,11 @@ class _DayCellState extends State<DayCell> {
         onEnter: (_) => setState(() => _isHovered = true),
         onExit: (_) => setState(() => _isHovered = false),
         child: AnimatedScale(
-          scale: _isHovered && !widget.isSelected ? 1.05 : 1.0,
-          duration: const Duration(milliseconds: 140),
-          curve: Curves.easeOut,
+          scale: (!reduceMotion && _isHovered && !widget.isSelected)
+              ? 1.05
+              : 1.0,
+          duration: animDuration,
+          curve: Curves.easeOutCubic,
           child: Material(
             color: Colors.transparent,
             child: InkWell(
@@ -108,8 +117,8 @@ class _DayCellState extends State<DayCell> {
                 widget.onTap?.call();
               },
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeInOut,
+                duration: animDuration,
+                curve: Curves.easeOutCubic,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),
                   color: tileBg,
@@ -118,7 +127,7 @@ class _DayCellState extends State<DayCell> {
                       : null,
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
+                  padding: const EdgeInsetsDirectional.symmetric(
                     vertical: 3,
                     horizontal: 2,
                   ),
@@ -132,7 +141,7 @@ class _DayCellState extends State<DayCell> {
                           Container(
                             width: 4,
                             height: 4,
-                            margin: const EdgeInsets.only(bottom: 2),
+                            margin: const EdgeInsetsDirectional.only(bottom: 2),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: widget.isToday
@@ -142,26 +151,29 @@ class _DayCellState extends State<DayCell> {
                           )
                         else
                           const SizedBox(height: 6),
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          width: 30,
-                          height: 30,
-                          alignment: Alignment.center,
+                        DecoratedBox(
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: widget.isToday
                                 ? todayColor
                                 : Colors.transparent,
                           ),
-                          child: Text(
-                            '${widget.cotsworth.day}',
-                            style: AppTheme.tabular(
-                              theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: widget.isToday || widget.isSelected
-                                    ? FontWeight.w700
-                                    : FontWeight.w600,
-                                color: numberColor,
-                                height: 1.0,
+                          child: SizedBox(
+                            width: 30,
+                            height: 30,
+                            child: Center(
+                              child: Text(
+                                '${widget.cotsworth.day}',
+                                style: AppTheme.tabular(
+                                  theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight:
+                                        widget.isToday || widget.isSelected
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                    color: numberColor,
+                                    height: 1.0,
+                                  ),
+                                ),
                               ),
                             ),
                           ),

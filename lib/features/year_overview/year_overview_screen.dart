@@ -7,7 +7,8 @@ import '../../core/calendar_engine/cotsworth_date.dart';
 import '../../core/calendar_engine/cotsworth_month.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/responsive_layout.dart';
-import '../../shared/widgets/navigation_cubit.dart';
+import '../../shared/navigation/navigation_cubit.dart';
+import '../../shared/widgets/smooth_page_transitions.dart';
 import '../calendar/presentation/bloc/calendar_bloc.dart';
 import '../calendar/presentation/bloc/calendar_event.dart';
 
@@ -21,6 +22,8 @@ class YearOverviewScreen extends StatefulWidget {
 }
 
 class _YearOverviewScreenState extends State<YearOverviewScreen> {
+  static final DateFormat _spanFmt = DateFormat('MMM d');
+
   int? _selectedYear;
 
   static CotsworthMonth? _monthOf(CotsworthDate d) => switch (d) {
@@ -33,7 +36,9 @@ class _YearOverviewScreenState extends State<YearOverviewScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final screen = ResponsiveLayout.of(context);
-    final calendarToday = context.watch<CalendarBloc>().state.today;
+    final calendarToday = context.select<CalendarBloc, CotsworthDate>(
+      (bloc) => bloc.state.today,
+    );
     final year = _selectedYear ?? calendarToday.year;
 
     final crossCount = switch (screen) {
@@ -42,109 +47,121 @@ class _YearOverviewScreenState extends State<YearOverviewScreen> {
       ScreenSizeClass.desktop => 4,
     };
     final isLeap = CotsworthConverter.isLeapYear(year);
-    final fmt = DateFormat('MMM d');
     final todayMonth = _monthOf(calendarToday);
     final todayDay = calendarToday is RegularCotsworthDate
         ? calendarToday.day
         : null;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsetsDirectional.all(
+        screen == ScreenSizeClass.mobile ? 12 : 16,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                tooltip: 'Previous year',
-                onPressed: () =>
-                    setState(() => _selectedYear = (year - 1).clamp(1, 9999)),
-                icon: const Icon(Icons.chevron_left_rounded),
-              ),
-              Text(
-                '$year',
-                style: AppTheme.tabular(
-                  theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+          StaggeredEntrance(
+            index: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  tooltip: 'Previous year',
+                  onPressed: () =>
+                      setState(() => _selectedYear = (year - 1).clamp(1, 9999)),
+                  icon: const Icon(Icons.chevron_left_rounded),
+                ),
+                Text(
+                  '$year',
+                  style: AppTheme.tabular(
+                    theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
-              ),
-              IconButton(
-                tooltip: 'Next year',
-                onPressed: () =>
-                    setState(() => _selectedYear = (year + 1).clamp(1, 9999)),
-                icon: const Icon(Icons.chevron_right_rounded),
-              ),
-              if (isLeap)
-                Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.intercalaryAccent(context).withAlpha(26),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
+                IconButton(
+                  tooltip: 'Next year',
+                  onPressed: () =>
+                      setState(() => _selectedYear = (year + 1).clamp(1, 9999)),
+                  icon: const Icon(Icons.chevron_right_rounded),
+                ),
+                if (isLeap)
+                  Padding(
+                    padding: const EdgeInsetsDirectional.only(start: 8),
+                    child: Container(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
                         color: AppTheme.intercalaryAccent(context)
-                            .withAlpha(80),
+                            .withAlpha(26),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: AppTheme.intercalaryAccent(context)
+                              .withAlpha(80),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      'Leap Year',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: AppTheme.intercalaryAccent(context),
-                        fontWeight: FontWeight.w600,
+                      child: Text(
+                        'Leap Year',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: AppTheme.intercalaryAccent(context),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 14),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossCount,
-              mainAxisExtent: screen == ScreenSizeClass.mobile ? 182 : 190,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-            ),
-            itemCount: 13,
-            itemBuilder: (context, i) {
-              final month = CotsworthMonth.fromNumber(i + 1);
-              final span = CotsworthConverter.getMonthGregorianSpan(
-                year,
-                month,
-              );
-              final isSol = month.isSol;
-              final isCurrentMonth =
-                  year == calendarToday.year && month == todayMonth;
+          RepaintBoundary(
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossCount,
+                mainAxisExtent: screen == ScreenSizeClass.mobile ? 182 : 192,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+              ),
+              itemCount: 13,
+              itemBuilder: (context, i) {
+                final month = CotsworthMonth.fromNumber(i + 1);
+                final span = CotsworthConverter.getMonthGregorianSpan(
+                  year,
+                  month,
+                );
+                final isSol = month.isSol;
+                final isCurrentMonth =
+                    year == calendarToday.year && month == todayMonth;
 
-              return _MiniMonthCard(
-                year: year,
-                month: month,
-                spanLabel:
-                    '${fmt.format(span.start)} – ${fmt.format(span.end)}',
-                isSol: isSol,
-                isCurrentMonth: isCurrentMonth,
-                todayDay: isCurrentMonth ? todayDay : null,
-                intercalaryLabel: month == CotsworthMonth.june && isLeap
-                    ? 'Leap Day'
-                    : month == CotsworthMonth.december
-                    ? 'Year Day'
-                    : null,
-                onTap: () {
-                  context.read<CalendarBloc>().add(
-                    CalendarMonthYearSelected(year: year, month: month),
-                  );
-                  context.read<NavigationCubit>().select(AppDestination.home);
-                },
-              );
-            },
+                return StaggeredEntrance(
+                  index: i,
+                  child: _MiniMonthCard(
+                    year: year,
+                    month: month,
+                    spanLabel:
+                        '${_spanFmt.format(span.start)} – ${_spanFmt.format(span.end)}',
+                    isSol: isSol,
+                    isCurrentMonth: isCurrentMonth,
+                    todayDay: isCurrentMonth ? todayDay : null,
+                    intercalaryLabel: month == CotsworthMonth.june && isLeap
+                        ? 'Leap Day'
+                        : month == CotsworthMonth.december
+                        ? 'Year Day'
+                        : null,
+                    onTap: () {
+                      context.read<CalendarBloc>().add(
+                        CalendarMonthYearSelected(year: year, month: month),
+                      );
+                      context.read<NavigationCubit>().select(
+                        AppDestination.home,
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -202,7 +219,7 @@ class _MiniMonthCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          padding: const EdgeInsetsDirectional.fromSTEB(12, 10, 12, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -237,7 +254,6 @@ class _MiniMonthCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 5),
-              // Weekday header row
               Row(
                 children: _weekdays
                     .map(
@@ -254,10 +270,9 @@ class _MiniMonthCard extends StatelessWidget {
                         ),
                       ),
                     )
-                    .toList(),
+                    .toList(growable: false),
               ),
               const SizedBox(height: 4),
-              // Compact 4 rows × 7 days perpetual grid
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -326,7 +341,10 @@ class _MiniMonthCard extends StatelessWidget {
 
   Widget _pill(String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+      padding: const EdgeInsetsDirectional.symmetric(
+        horizontal: 5,
+        vertical: 1.5,
+      ),
       decoration: BoxDecoration(
         color: color.withAlpha(26),
         borderRadius: BorderRadius.circular(6),
