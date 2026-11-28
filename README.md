@@ -132,15 +132,3 @@ flutter build linux --release
 ```
 
 ---
-
-## Screenshots
-(will add later....)
-UI and theme reference captures are kept in [`theme_ss/`](./theme_ss/). Update the paths below to embed them directly in GitHub:
-
-```markdown
-| Light Theme | Dark Theme |
-|---|---|
-| ![Light](theme_ss/light.png) | ![Dark](theme_ss/dark.png) |
-```
-
-

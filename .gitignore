@@ -46,3 +46,21 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Secrets, Firebase configs, signing keys & environment files (public repo protection)
+.env
+.env.*
+!.env.example
+.firebaserc
+firebase.json
+firebase-debug.log
+firestore-debug.log
+android/app/google-services.json
+**/GoogleService-Info.plist
+android/key.properties
+*.jks
+*.keystore
+*.p12
+*.mobileprovision
+*service-account*.json
+firebase-adminsdk-*.json

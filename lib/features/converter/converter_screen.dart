@@ -8,7 +8,9 @@ import '../../core/calendar_engine/cotsworth_date.dart';
 import '../../core/calendar_engine/cotsworth_extensions.dart';
 import '../../core/calendar_engine/cotsworth_month.dart';
 import '../../core/theme/app_theme.dart';
-import '../../shared/widgets/navigation_cubit.dart';
+import '../../core/utils/date_clipboard_formatter.dart';
+import '../../shared/navigation/navigation_cubit.dart';
+import '../../shared/widgets/smooth_page_transitions.dart';
 import '../calendar/presentation/bloc/calendar_bloc.dart';
 import '../calendar/presentation/bloc/calendar_event.dart';
 import 'presentation/bloc/converter_cubit.dart';
@@ -17,96 +19,116 @@ import 'presentation/bloc/converter_state.dart';
 class ConverterScreen extends StatelessWidget {
   const ConverterScreen({super.key});
 
+  static final DateFormat _historyFmt = DateFormat('EEEE, MMM d, y');
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return BlocBuilder<ConverterCubit, ConverterState>(
       builder: (context, state) {
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsetsDirectional.all(16),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 640),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Semantics(
-                    header: true,
-                    child: Text(
-                      'Gregorian ↔ Cotsworth Converter',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Instant bidirectional conversion with leap-year validation',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: SegmentedButton<ConversionDirection>(
-                          segments: const [
-                            ButtonSegment(
-                              value: ConversionDirection.gregorianToCotsworth,
-                              label: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  'Gregorian → Cotsworth',
-                                  maxLines: 1,
-                                ),
-                              ),
+                  StaggeredEntrance(
+                    index: 0,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Semantics(
+                          header: true,
+                          child: Text(
+                            'Gregorian ↔ Cotsworth Converter',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
                             ),
-                            ButtonSegment(
-                              value: ConversionDirection.cotsworthToGregorian,
-                              label: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  'Cotsworth → Gregorian',
-                                  maxLines: 1,
-                                ),
-                              ),
-                            ),
-                          ],
-                          selected: {state.direction},
-                          onSelectionChanged: (s) => context
-                              .read<ConverterCubit>()
-                              .setDirection(s.first),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton.filledTonal(
-                        key: const Key('converter_swap_button'),
-                        tooltip: 'Swap direction',
-                        style: IconButton.styleFrom(
-                          backgroundColor: theme.colorScheme.surfaceContainer,
-                          foregroundColor: theme.colorScheme.primary,
-                          side: BorderSide(
-                            color: theme.colorScheme.outlineVariant,
                           ),
                         ),
-                        onPressed: () =>
-                            context.read<ConverterCubit>().swapDirection(),
-                        icon: const Icon(Icons.swap_horiz_rounded),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          'Instant bidirectional conversion with leap-year validation',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
-                  if (state.direction ==
-                      ConversionDirection.gregorianToCotsworth)
-                    _GregorianInputPanel(initialValue: state.gregorianInput)
-                  else
-                    const _CotsworthInputPanel(),
+                  StaggeredEntrance(
+                    index: 1,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: SegmentedButton<ConversionDirection>(
+                            segments: const [
+                              ButtonSegment(
+                                value: ConversionDirection.gregorianToCotsworth,
+                                label: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    'Gregorian → Cotsworth',
+                                    maxLines: 1,
+                                  ),
+                                ),
+                              ),
+                              ButtonSegment(
+                                value: ConversionDirection.cotsworthToGregorian,
+                                label: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    'Cotsworth → Gregorian',
+                                    maxLines: 1,
+                                  ),
+                                ),
+                              ),
+                            ],
+                            selected: {state.direction},
+                            onSelectionChanged: (s) => context
+                                .read<ConverterCubit>()
+                                .setDirection(s.first),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton.filledTonal(
+                          key: const Key('converter_swap_button'),
+                          tooltip: 'Swap direction',
+                          style: IconButton.styleFrom(
+                            backgroundColor: theme.colorScheme.surfaceContainer,
+                            foregroundColor: theme.colorScheme.primary,
+                            side: BorderSide(
+                              color: theme.colorScheme.outlineVariant,
+                            ),
+                          ),
+                          onPressed: () =>
+                              context.read<ConverterCubit>().swapDirection(),
+                          icon: const Icon(Icons.swap_horiz_rounded),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  StaggeredEntrance(
+                    index: 2,
+                    child: RepaintBoundary(
+                      child:
+                          state.direction ==
+                              ConversionDirection.gregorianToCotsworth
+                          ? _GregorianInputPanel(
+                              initialValue: state.gregorianInput,
+                            )
+                          : const _CotsworthInputPanel(),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   if (state.error != null)
                     Container(
-                      padding: const EdgeInsets.all(12),
-                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsetsDirectional.all(12),
+                      margin: const EdgeInsetsDirectional.only(bottom: 12),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.errorContainer,
                         borderRadius: BorderRadius.circular(14),
@@ -130,7 +152,8 @@ class ConverterScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                  if (state.result != null) _ResultCard(result: state.result!),
+                  if (state.result != null)
+                    RepaintBoundary(child: _ResultCard(result: state.result!)),
                   if (state.history.isNotEmpty) ...[
                     const SizedBox(height: 20),
                     Row(
@@ -162,7 +185,7 @@ class ConverterScreen extends StatelessWidget {
                             ),
                           ),
                           subtitle: Text(
-                            DateFormat('EEEE, MMM d, y').format(h.gregorian),
+                            _historyFmt.format(h.gregorian),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -526,10 +549,11 @@ class _ResultCard extends StatelessWidget {
   const _ResultCard({required this.result});
   final ({CotsworthDate cotsworth, DateTime gregorian}) result;
 
+  static final DateFormat _gregFmt = DateFormat('EEEE, MMMM d, y');
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final gregFmt = DateFormat('EEEE, MMMM d, y');
     final isSol =
         result.cotsworth is RegularCotsworthDate &&
         (result.cotsworth as RegularCotsworthDate).month.isSol;
@@ -546,7 +570,7 @@ class _ResultCard extends StatelessWidget {
         side: BorderSide(color: accent.withAlpha(110), width: 1.25),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsetsDirectional.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -577,7 +601,7 @@ class _ResultCard extends StatelessWidget {
             ),
             const Divider(height: 24),
             Text(
-              gregFmt.format(result.gregorian),
+              _gregFmt.format(result.gregorian),
               style: theme.textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -595,13 +619,22 @@ class _ResultCard extends StatelessWidget {
               runSpacing: 8,
               children: [
                 OutlinedButton.icon(
+                  key: const Key('converter_copy_both_button'),
                   onPressed: () {
-                    final text =
-                        '${result.cotsworth.formatFull()} = ${gregFmt.format(result.gregorian)}';
-                    Clipboard.setData(ClipboardData(text: text));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Copied to clipboard')),
+                    final text = DateClipboardFormatter.formatCopyBoth(
+                      gregorian: result.gregorian,
+                      cotsworth: result.cotsworth,
                     );
+                    Clipboard.setData(ClipboardData(text: text));
+                    ScaffoldMessenger.of(context)
+                      ..hideCurrentSnackBar()
+                      ..showSnackBar(
+                        const SnackBar(
+                          content: Text('Copied to clipboard'),
+                          behavior: SnackBarBehavior.floating,
+                          duration: Duration(seconds: 3),
+                        ),
+                      );
                   },
                   icon: const Icon(Icons.copy_rounded, size: 17),
                   label: const Text('Copy Result'),

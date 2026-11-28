@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../../core/calendar_engine/cotsworth_converter.dart';
 import '../../../../core/calendar_engine/cotsworth_date.dart';
 import '../../../../core/calendar_engine/cotsworth_month.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -12,6 +13,8 @@ import '../bloc/calendar_state.dart';
 /// Month navigation header with current-month red accent and responsive Today pill.
 class MonthHeader extends StatelessWidget {
   const MonthHeader({super.key});
+
+  static final DateFormat _spanFmt = DateFormat('MMM d');
 
   static CotsworthMonth _monthOf(CotsworthDate d) => switch (d) {
     RegularCotsworthDate(:final month) => month,
@@ -24,17 +27,28 @@ class MonthHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final isNarrow = MediaQuery.sizeOf(context).width < 430;
 
-    return BlocBuilder<CalendarBloc, CalendarState>(
-      builder: (context, state) {
-        final span = state.gregorianSpan;
-        final fmt = DateFormat('MMM d');
+    return BlocSelector<
+      CalendarBloc,
+      CalendarState,
+      ({int focusedYear, CotsworthMonth focusedMonth, CotsworthDate today})
+    >(
+      selector: (state) => (
+        focusedYear: state.focusedYear,
+        focusedMonth: state.focusedMonth,
+        today: state.today,
+      ),
+      builder: (context, slice) {
+        final span = CotsworthConverter.getMonthGregorianSpan(
+          slice.focusedYear,
+          slice.focusedMonth,
+        );
         final spanStr = isNarrow
-            ? '${fmt.format(span.start)} – ${fmt.format(span.end)}'
-            : 'Gregorian: ${fmt.format(span.start)} – ${fmt.format(span.end)}, ${state.focusedYear}';
-        final isSol = state.focusedMonth.isSol;
+            ? '${_spanFmt.format(span.start)} – ${_spanFmt.format(span.end)}'
+            : 'Gregorian: ${_spanFmt.format(span.start)} – ${_spanFmt.format(span.end)}, ${slice.focusedYear}';
+        final isSol = slice.focusedMonth.isSol;
         final isCurrentMonth =
-            state.focusedYear == state.today.year &&
-            state.focusedMonth == _monthOf(state.today);
+            slice.focusedYear == slice.today.year &&
+            slice.focusedMonth == _monthOf(slice.today);
 
         final titleColor = isSol
             ? AppTheme.solAccent(context)
@@ -43,7 +57,7 @@ class MonthHeader extends StatelessWidget {
             : theme.colorScheme.onSurface;
 
         return Padding(
-          padding: const EdgeInsets.fromLTRB(6, 4, 10, 8),
+          padding: const EdgeInsetsDirectional.fromSTEB(6, 4, 10, 8),
           child: Row(
             children: [
               IconButton(
@@ -58,9 +72,13 @@ class MonthHeader extends StatelessWidget {
               Expanded(
                 child: InkWell(
                   borderRadius: BorderRadius.circular(12),
-                  onTap: () => _showMonthPicker(context, state),
+                  onTap: () => _showMonthPicker(
+                    context,
+                    slice.focusedYear,
+                    slice.focusedMonth,
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsetsDirectional.symmetric(vertical: 4),
                     child: Column(
                       children: [
                         Row(
@@ -69,7 +87,7 @@ class MonthHeader extends StatelessWidget {
                           children: [
                             Flexible(
                               child: Text(
-                                '${state.focusedMonth.fullName} ${state.focusedYear}',
+                                '${slice.focusedMonth.fullName} ${slice.focusedYear}',
                                 textAlign: TextAlign.center,
                                 overflow: TextOverflow.ellipsis,
                                 style: AppTheme.tabular(
@@ -91,7 +109,7 @@ class MonthHeader extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Month ${state.focusedMonth.number} of 13 · $spanStr',
+                          'Month ${slice.focusedMonth.number} of 13 · $spanStr',
                           textAlign: TextAlign.center,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall?.copyWith(
@@ -118,7 +136,7 @@ class MonthHeader extends StatelessWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: AppTheme.todayAccent(context).withAlpha(28),
                   foregroundColor: AppTheme.todayAccent(context),
-                  padding: EdgeInsets.symmetric(
+                  padding: EdgeInsetsDirectional.symmetric(
                     horizontal: isNarrow ? 10 : 14,
                     vertical: 8,
                   ),
@@ -146,12 +164,16 @@ class MonthHeader extends StatelessWidget {
     );
   }
 
-  void _showMonthPicker(BuildContext context, CalendarState state) {
+  void _showMonthPicker(
+    BuildContext context,
+    int focusedYear,
+    CotsworthMonth focusedMonth,
+  ) {
     showDialog<void>(
       context: context,
       builder: (_) => _MonthPickerDialog(
-        currentYear: state.focusedYear,
-        currentMonth: state.focusedMonth,
+        currentYear: focusedYear,
+        currentMonth: focusedMonth,
         onSelected: (year, month) {
           context.read<CalendarBloc>().add(
             CalendarMonthYearSelected(year: year, month: month),

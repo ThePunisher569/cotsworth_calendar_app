@@ -5,18 +5,28 @@ import 'package:shared_preferences/shared_preferences.dart';
 abstract interface class LocalStorageService {
   bool get isDarkMode;
   Future<void> setDarkMode(bool value);
+  bool get autoSolarTheme;
+  Future<void> setAutoSolarTheme(bool value);
+  bool get reduceMotion;
+  Future<void> setReduceMotion(bool value);
   bool get isGuestLoggedIn;
   Future<void> setGuestLoggedIn(bool value);
   ({int year, int monthNumber})? getLastViewedMonth();
   Future<void> saveLastViewedMonth(int year, int monthNumber);
   List<Map<String, dynamic>> getConverterHistory();
   Future<void> saveConverterHistory(List<Map<String, dynamic>> entries);
+  ({double lat, double lon})? getLastKnownLocation();
+  Future<void> saveLastKnownLocation(double lat, double lon);
+  Map<String, dynamic>? getCachedWeather(String gridKey);
+  Future<void> saveCachedWeather(String gridKey, Map<String, dynamic> data);
 }
 
 class AppLocalStorageService implements LocalStorageService {
   AppLocalStorageService._(this._prefs, this._calendarBox, this._converterBox);
 
   static const _kDarkMode = 'settings.is_dark_mode';
+  static const _kAutoSolarTheme = 'settings.auto_solar_theme';
+  static const _kReduceMotion = 'settings.reduce_motion';
   static const _kGuestLoggedIn = 'auth.is_guest_logged_in';
   static const _kCalendarBoxName = 'calendar_cache';
   static const _kConverterBoxName = 'converter_history';
@@ -38,6 +48,18 @@ class AppLocalStorageService implements LocalStorageService {
   bool get isDarkMode => _prefs.getBool(_kDarkMode) ?? true;
   @override
   Future<void> setDarkMode(bool value) => _prefs.setBool(_kDarkMode, value);
+
+  @override
+  bool get autoSolarTheme => _prefs.getBool(_kAutoSolarTheme) ?? true;
+  @override
+  Future<void> setAutoSolarTheme(bool value) =>
+      _prefs.setBool(_kAutoSolarTheme, value);
+
+  @override
+  bool get reduceMotion => _prefs.getBool(_kReduceMotion) ?? false;
+  @override
+  Future<void> setReduceMotion(bool value) =>
+      _prefs.setBool(_kReduceMotion, value);
 
   @override
   bool get isGuestLoggedIn => _prefs.getBool(_kGuestLoggedIn) ?? false;
@@ -74,25 +96,70 @@ class AppLocalStorageService implements LocalStorageService {
   @override
   Future<void> saveConverterHistory(List<Map<String, dynamic>> entries) =>
       _converterBox.put('history', entries);
+
+  @override
+  ({double lat, double lon})? getLastKnownLocation() {
+    final lat = _calendarBox.get('sky_lat');
+    final lon = _calendarBox.get('sky_lon');
+    if (lat is num && lon is num) {
+      return (lat: lat.toDouble(), lon: lon.toDouble());
+    }
+    return null;
+  }
+
+  @override
+  Future<void> saveLastKnownLocation(double lat, double lon) async {
+    await _calendarBox.put('sky_lat', lat);
+    await _calendarBox.put('sky_lon', lon);
+  }
+
+  @override
+  Map<String, dynamic>? getCachedWeather(String gridKey) {
+    final raw = _calendarBox.get('weather_$gridKey');
+    if (raw is Map) {
+      return Map<String, dynamic>.from(raw);
+    }
+    return null;
+  }
+
+  @override
+  Future<void> saveCachedWeather(String gridKey, Map<String, dynamic> data) =>
+      _calendarBox.put('weather_$gridKey', data);
 }
 
 /// In-memory implementation for tests.
 class InMemoryLocalStorageService implements LocalStorageService {
   InMemoryLocalStorageService({
     bool darkMode = false,
+    bool autoSolarTheme = true,
+    bool reduceMotion = false,
     bool guestLoggedIn = false,
   }) : _dark = darkMode,
+       _autoSolar = autoSolarTheme,
+       _motionReduced = reduceMotion,
        _guest = guestLoggedIn;
 
   bool _dark;
+  bool _autoSolar;
+  bool _motionReduced;
   bool _guest;
   ({int year, int monthNumber})? _lastMonth;
+  ({double lat, double lon})? _lastLocation;
   List<Map<String, dynamic>> _history = [];
+  final Map<String, Map<String, dynamic>> _weatherCache = {};
 
   @override
   bool get isDarkMode => _dark;
   @override
   Future<void> setDarkMode(bool value) async => _dark = value;
+  @override
+  bool get autoSolarTheme => _autoSolar;
+  @override
+  Future<void> setAutoSolarTheme(bool value) async => _autoSolar = value;
+  @override
+  bool get reduceMotion => _motionReduced;
+  @override
+  Future<void> setReduceMotion(bool value) async => _motionReduced = value;
   @override
   bool get isGuestLoggedIn => _guest;
   @override
@@ -107,4 +174,17 @@ class InMemoryLocalStorageService implements LocalStorageService {
   @override
   Future<void> saveConverterHistory(List<Map<String, dynamic>> entries) async =>
       _history = List.from(entries);
+  @override
+  ({double lat, double lon})? getLastKnownLocation() => _lastLocation;
+  @override
+  Future<void> saveLastKnownLocation(double lat, double lon) async =>
+      _lastLocation = (lat: lat, lon: lon);
+  @override
+  Map<String, dynamic>? getCachedWeather(String gridKey) =>
+      _weatherCache[gridKey];
+  @override
+  Future<void> saveCachedWeather(
+    String gridKey,
+    Map<String, dynamic> data,
+  ) async => _weatherCache[gridKey] = Map<String, dynamic>.from(data);
 }

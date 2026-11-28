@@ -331,9 +331,21 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
+      progressIndicatorTheme: ProgressIndicatorThemeData(
         linearTrackColor: _surfaceContainerHighDark,
         color: _primaryDark,
+        linearMinHeight: 8,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      sliderTheme: SliderThemeData(
+        trackHeight: 6,
+        activeTrackColor: _primaryDark,
+        inactiveTrackColor: _surfaceContainerHighDark,
+        thumbColor: Colors.white,
+        overlayColor: _primaryDark.withAlpha(36),
+        trackShape: const RoundedRectSliderTrackShape(),
+        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
+        overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
       ),
     );
   }
@@ -539,9 +551,21 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
+      progressIndicatorTheme: ProgressIndicatorThemeData(
         linearTrackColor: _surfaceContainerHighLight,
         color: _primaryLight,
+        linearMinHeight: 8,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      sliderTheme: SliderThemeData(
+        trackHeight: 6,
+        activeTrackColor: _primaryLight,
+        inactiveTrackColor: _surfaceContainerHighLight,
+        thumbColor: _primaryLight,
+        overlayColor: _primaryLight.withAlpha(32),
+        trackShape: const RoundedRectSliderTrackShape(),
+        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
+        overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
       ),
     );
   }
@@ -574,5 +598,12 @@ abstract final class AppTheme {
     return Theme.of(context).brightness == Brightness.dark
         ? _primaryDark
         : _primaryLight;
+  }
+
+  /// High-intensity emerald green badge color for verified accounts.
+  static Color verifiedGreen(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF00E676)
+        : const Color(0xFF00C853);
   }
 }
